@@ -1,10 +1,17 @@
+// ===== CONFIGURACIÓN GLOBAL =====
+let isVideoInitialized = false;
+
 // Función que se ejecuta cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Iniciando aplicación...');
     initializeApp();
 });
 
 // Función principal de inicialización
 function initializeApp() {
+    console.log('Inicializando aplicación FUTRAVIF...');
+    
+    // Inicialización en orden específico
     initializeNavigation();
     initializeScrollEffects();
     initializeAnimations();
@@ -12,10 +19,301 @@ function initializeApp() {
     initializeScrollToTop();
     initializeFormValidation();
     initializeResponsiveFeatures();
+    initializeAccessibility();
+    
+    // Video player debe inicializarse después de todo lo demás
+    setTimeout(() => {
+        initializeVideoPlayer();
+    }, 500);
+    
+    console.log('Aplicación inicializada correctamente ✅');
+}
+
+// ===== FUNCIONALIDAD DE VIDEO =====
+function initializeVideoPlayer() {
+    if (isVideoInitialized) {
+        console.log('Video player ya inicializado, saltando...');
+        return;
+    }
+
+    const video = document.getElementById('fundacion-video');
+    
+    if (!video) {
+        console.log('⚠️ Video element not found');
+        return;
+    }
+
+    console.log('🎬 Inicializando video player...');
+    isVideoInitialized = true;
+
+    // Variables globales del video
+    let isPlaying = false;
+    let controlsTimeout;
+
+    // Elementos del DOM
+    const videoWrapper = document.querySelector('.video-wrapper');
+    const overlay = document.getElementById('video-overlay');
+    const playButton = document.getElementById('play-button');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-fill');
+    const timeDisplay = document.getElementById('time-display');
+    const volumeBtn = document.getElementById('volume-btn');
+    const volumeSlider = document.getElementById('volume-slider');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const videoControls = document.getElementById('video-controls');
+
+    // ===== FUNCIÓN PRINCIPAL DE PLAY/PAUSE =====
+    function togglePlay() {
+        console.log('🎯 Toggle play called, video paused:', video.paused);
+        
+        if (video.paused) {
+            // Reproducir
+            const playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('▶️ Video playing successfully');
+                    isPlaying = true;
+                    updateUIForPlay();
+                    hideControlsAfterDelay();
+                }).catch(error => {
+                    console.error('❌ Error playing video:', error);
+                    showNotification('Error al reproducir el video: ' + error.message, 'error');
+                });
+            }
+        } else {
+            // Pausar
+            video.pause();
+            isPlaying = false;
+            updateUIForPause();
+            clearTimeout(controlsTimeout);
+        }
+    }
+
+    function updateUIForPlay() {
+        if (overlay) overlay.style.display = 'none';
+        if (videoWrapper) videoWrapper.classList.add('playing');
+        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    }
+
+    function updateUIForPause() {
+        if (overlay) overlay.style.display = 'flex';
+        if (videoWrapper) videoWrapper.classList.remove('playing');
+        if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        if (videoControls) videoControls.style.opacity = '1';
+    }
+
+    // ===== ACTUALIZAR PROGRESO =====
+    function updateProgress() {
+        if (video.duration && progressFill && timeDisplay) {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressFill.style.width = progress + '%';
+            
+            // Actualizar tiempo
+            const currentMin = Math.floor(video.currentTime / 60);
+            const currentSec = Math.floor(video.currentTime % 60);
+            const totalMin = Math.floor(video.duration / 60);
+            const totalSec = Math.floor(video.duration % 60);
+            
+            timeDisplay.textContent = 
+                `${currentMin}:${currentSec.toString().padStart(2, '0')} / ${totalMin}:${totalSec.toString().padStart(2, '0')}`;
+        }
+    }
+
+    // ===== CAMBIAR POSICIÓN DEL VIDEO =====
+    function setProgress(e) {
+        if (!progressBar || !video.duration) return;
+        
+        const rect = progressBar.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        video.currentTime = pos * video.duration;
+    }
+
+    // ===== CONTROLAR VOLUMEN =====
+    function toggleMute() {
+        if (!volumeBtn) return;
+        
+        video.muted = !video.muted;
+        volumeBtn.innerHTML = video.muted ? 
+            '<i class="fas fa-volume-mute"></i>' : 
+            '<i class="fas fa-volume-up"></i>';
+    }
+
+    function changeVolume() {
+        if (!volumeSlider) return;
+        
+        video.volume = volumeSlider.value;
+        video.muted = video.volume === 0;
+        
+        if (volumeBtn) {
+            volumeBtn.innerHTML = video.muted || video.volume === 0 ? 
+                '<i class="fas fa-volume-mute"></i>' : 
+                '<i class="fas fa-volume-up"></i>';
+        }
+    }
+
+    // ===== PANTALLA COMPLETA =====
+    function toggleFullscreen() {
+        if (!videoWrapper) return;
+        
+        if (!document.fullscreenElement) {
+            videoWrapper.requestFullscreen().catch(err => {
+                console.error('❌ Error fullscreen:', err);
+            });
+        } else {
+            document.exitFullscreen().catch(err => {
+                console.error('❌ Error exit fullscreen:', err);
+            });
+        }
+    }
+
+    // ===== OCULTAR CONTROLES =====
+    function hideControlsAfterDelay() {
+        if (!videoControls) return;
+        
+        clearTimeout(controlsTimeout);
+        videoControls.style.opacity = '1';
+        
+        if (isPlaying) {
+            controlsTimeout = setTimeout(() => {
+                if (isPlaying && !videoWrapper.matches(':hover')) {
+                    videoControls.style.opacity = '0';
+                }
+            }, 3000);
+        }
+    }
+
+    // ===== SETUP EVENT LISTENERS =====
+    function setupVideoEventListeners() {
+        // Play buttons
+        if (playButton) {
+            playButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🎯 Main play button clicked');
+                togglePlay();
+            });
+        }
+
+        if (playPauseBtn) {
+            playPauseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🎯 Control play button clicked');
+                togglePlay();
+            });
+        }
+
+        // Video click
+        video.addEventListener('click', function(e) {
+            e.preventDefault();
+            togglePlay();
+        });
+
+        // Progress bar
+        if (progressBar) {
+            progressBar.addEventListener('click', setProgress);
+        }
+
+        // Volume controls
+        if (volumeBtn) {
+            volumeBtn.addEventListener('click', toggleMute);
+        }
+        
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', changeVolume);
+            volumeSlider.value = 1;
+            video.volume = 1;
+        }
+
+        // Fullscreen
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+        }
+
+        // Video events
+        video.addEventListener('timeupdate', updateProgress);
+        
+        video.addEventListener('loadedmetadata', function() {
+            console.log('📊 Video metadata loaded');
+            updateProgress();
+        });
+
+        video.addEventListener('ended', function() {
+            console.log('🔚 Video ended');
+            isPlaying = false;
+            if (overlay) overlay.style.display = 'flex';
+            if (videoWrapper) videoWrapper.classList.remove('playing');
+            if (playPauseBtn) playPauseBtn.innerHTML = '<i class="fas fa-replay"></i>';
+            if (videoControls) videoControls.style.opacity = '1';
+        });
+
+        video.addEventListener('error', function(e) {
+            console.error('❌ Video error:', e);
+            console.error('Error code:', video.error ? video.error.code : 'unknown');
+            showNotification('Error al cargar el video. Verifica la ruta: Videos/Video_Fundacion.mp4', 'error');
+        });
+
+        // Mouse events para mostrar controles
+        if (videoWrapper) {
+            videoWrapper.addEventListener('mouseenter', function() {
+                if (videoControls) videoControls.style.opacity = '1';
+                clearTimeout(controlsTimeout);
+            });
+
+            videoWrapper.addEventListener('mouseleave', function() {
+                if (isPlaying) hideControlsAfterDelay();
+            });
+
+            videoWrapper.addEventListener('mousemove', function() {
+                if (isPlaying) hideControlsAfterDelay();
+            });
+        }
+
+        // Keyboard shortcuts
+        video.setAttribute('tabindex', '0');
+        video.addEventListener('keydown', function(e) {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    video.currentTime = Math.max(0, video.currentTime - 10);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    toggleMute();
+                    break;
+            }
+        });
+
+        // Fullscreen change event
+        document.addEventListener('fullscreenchange', function() {
+            if (fullscreenBtn) {
+                fullscreenBtn.innerHTML = document.fullscreenElement ? 
+                    '<i class="fas fa-compress"></i>' : 
+                    '<i class="fas fa-expand"></i>';
+            }
+        });
+
+        console.log('🎧 Video event listeners configurados');
+    }
+
+    // Configurar todos los event listeners
+    setupVideoEventListeners();
+    
+    console.log('✅ Video player initialized successfully!');
 }
 
 // ===== NAVEGACIÓN =====
 function initializeNavigation() {
+    console.log('🧭 Inicializando navegación...');
+    
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
@@ -50,7 +348,7 @@ function initializeNavigation() {
 
     // Cambio de estilo del header al hacer scroll
     let lastScrollTop = 0;
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', throttle(function() {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
         if (scrollTop > 100) {
@@ -67,7 +365,7 @@ function initializeNavigation() {
         }
         
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    });
+    }, 16));
 
     // Smooth scroll para enlaces internos
     navLinks.forEach(link => {
@@ -95,7 +393,7 @@ function initializeNavigation() {
     // Destacar enlace activo en la navegación
     const sections = document.querySelectorAll('section[id]');
     
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', throttle(function() {
         let current = '';
         const scrollY = window.pageYOffset;
         
@@ -115,25 +413,31 @@ function initializeNavigation() {
                 link.classList.add('active');
             }
         });
-    });
+    }, 100));
+
+    console.log('✅ Navegación inicializada');
 }
 
 // ===== EFECTOS DE SCROLL =====
 function initializeScrollEffects() {
+    console.log('📜 Inicializando efectos de scroll...');
+    
     // Parallax effect para el hero
     const hero = document.querySelector('.hero');
     
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', throttle(function() {
         const scrolled = window.pageYOffset;
         const rate = scrolled * -0.5;
         
         if (hero) {
             hero.style.transform = `translateY(${rate}px)`;
         }
-    });
+    }, 16));
 
     // Efecto de progreso de lectura
     createReadingProgressBar();
+    
+    console.log('✅ Efectos de scroll inicializados');
 }
 
 // Crear barra de progreso de lectura
@@ -153,15 +457,17 @@ function createReadingProgressBar() {
     
     document.body.appendChild(progressBar);
     
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', throttle(function() {
         const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
         const scrolled = (window.scrollY / windowHeight) * 100;
         progressBar.style.width = scrolled + '%';
-    });
+    }, 16));
 }
 
 // ===== ANIMACIONES =====
 function initializeAnimations() {
+    console.log('🎨 Inicializando animaciones...');
+    
     // Observer para animaciones al hacer scroll
     const observerOptions = {
         threshold: 0.1,
@@ -212,6 +518,8 @@ function initializeAnimations() {
             observer.observe(el);
         }, index * 100);
     });
+
+    console.log('✅ Animaciones inicializadas');
 }
 
 // Animación de contadores
@@ -236,6 +544,8 @@ function animateCounter(element) {
 
 // ===== LAZY LOADING =====
 function initializeLazyLoading() {
+    console.log('🖼️ Inicializando lazy loading...');
+    
     const images = document.querySelectorAll('img[data-src]');
     
     const imageObserver = new IntersectionObserver(function(entries) {
@@ -250,10 +560,14 @@ function initializeLazyLoading() {
     });
     
     images.forEach(img => imageObserver.observe(img));
+    
+    console.log('✅ Lazy loading inicializado');
 }
 
 // ===== SCROLL TO TOP =====
 function initializeScrollToTop() {
+    console.log('⬆️ Inicializando scroll to top...');
+    
     // Crear botón scroll to top
     const scrollToTopBtn = document.createElement('button');
     scrollToTopBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
@@ -283,7 +597,7 @@ function initializeScrollToTop() {
     document.body.appendChild(scrollToTopBtn);
     
     // Mostrar/ocultar botón según scroll
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', throttle(function() {
         if (window.pageYOffset > 300) {
             scrollToTopBtn.style.opacity = '1';
             scrollToTopBtn.style.visibility = 'visible';
@@ -293,7 +607,7 @@ function initializeScrollToTop() {
             scrollToTopBtn.style.visibility = 'hidden';
             scrollToTopBtn.style.transform = 'translateY(20px)';
         }
-    });
+    }, 100));
     
     // Scroll suave hacia arriba
     scrollToTopBtn.addEventListener('click', function() {
@@ -303,7 +617,7 @@ function initializeScrollToTop() {
         });
     });
     
-    // Hover effect
+    // Hover effects
     scrollToTopBtn.addEventListener('mouseenter', function() {
         this.style.transform = 'translateY(-3px) scale(1.1)';
         this.style.boxShadow = '0 6px 12px rgba(0,0,0,0.4)';
@@ -313,10 +627,14 @@ function initializeScrollToTop() {
         this.style.transform = 'translateY(0) scale(1)';
         this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
     });
+
+    console.log('✅ Scroll to top inicializado');
 }
 
 // ===== VALIDACIÓN DE FORMULARIOS =====
 function initializeFormValidation() {
+    console.log('📋 Inicializando validación de formularios...');
+    
     const forms = document.querySelectorAll('form');
     
     forms.forEach(form => {
@@ -339,6 +657,8 @@ function initializeFormValidation() {
             });
         });
     });
+
+    console.log('✅ Validación de formularios inicializada');
 }
 
 // Validar formulario completo
@@ -533,6 +853,8 @@ function getNotificationColor(type) {
 
 // ===== CARACTERÍSTICAS RESPONSIVE =====
 function initializeResponsiveFeatures() {
+    console.log('📱 Inicializando características responsive...');
+    
     // Detectar cambios en el tamaño de pantalla
     let resizeTimer;
     window.addEventListener('resize', function() {
@@ -544,6 +866,8 @@ function initializeResponsiveFeatures() {
     
     // Manejo inicial
     handleResponsiveChanges();
+
+    console.log('✅ Características responsive inicializadas');
 }
 
 function handleResponsiveChanges() {
@@ -552,29 +876,68 @@ function handleResponsiveChanges() {
     
     // Ajustar comportamiento según el dispositivo
     if (isMobile) {
-        // Comportamiento para móviles
         document.body.classList.add('mobile');
         document.body.classList.remove('tablet', 'desktop');
-        
-        // Reducir animaciones en móviles para mejor rendimiento
         document.body.classList.add('reduced-motion');
         
     } else if (isTablet) {
-        // Comportamiento para tablets
         document.body.classList.add('tablet');
         document.body.classList.remove('mobile', 'desktop');
         document.body.classList.remove('reduced-motion');
         
     } else {
-        // Comportamiento para desktop
         document.body.classList.add('desktop');
         document.body.classList.remove('mobile', 'tablet');
         document.body.classList.remove('reduced-motion');
     }
 }
 
+// ===== ACCESSIBILITY =====
+function initializeAccessibility() {
+    console.log('♿ Inicializando accesibilidad...');
+    
+    // Soporte para navegación por teclado
+    document.addEventListener('keydown', function(e) {
+        // ESC para cerrar menú móvil
+        if (e.key === 'Escape') {
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (hamburger && navMenu && navMenu.classList.contains('active')) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+                document.body.classList.remove('menu-open');
+            }
+        }
+        
+        // Enter en cards para activar hover effect
+        if (e.key === 'Enter' && e.target.classList.contains('card')) {
+            e.target.click();
+        }
+    });
+    
+    // Añadir indicadores de focus visibles
+    const focusableElements = document.querySelectorAll(
+        'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    focusableElements.forEach(element => {
+        element.addEventListener('focus', function() {
+            this.classList.add('focused');
+        });
+        
+        element.addEventListener('blur', function() {
+            this.classList.remove('focused');
+        });
+    });
+
+    console.log('✅ Accesibilidad inicializada');
+}
+
 // ===== EFECTOS VISUALES AVANZADOS =====
 function initializeAdvancedEffects() {
+    console.log('✨ Inicializando efectos avanzados...');
+    
     // Efecto de partículas en el hero
     createParticleEffect();
     
@@ -583,6 +946,8 @@ function initializeAdvancedEffects() {
     
     // Hover effects mejorados para cards
     initializeCardEffects();
+
+    console.log('✅ Efectos avanzados inicializados');
 }
 
 // Crear efecto de partículas
@@ -761,13 +1126,60 @@ function formatPhone(input) {
     input.value = value;
 }
 
-// ===== PERFORMANCE =====
-// Optimizar scroll events
-const optimizedScrollHandler = throttle(function() {
-    // Manejar efectos de scroll aquí
-}, 16); // 60fps
+// Función para copiar texto al portapapeles
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showNotification('Texto copiado al portapapeles', 'success');
+        return true;
+    } catch (err) {
+        console.error('Error al copiar:', err);
+        showNotification('No se pudo copiar el texto', 'error');
+        return false;
+    }
+}
 
-window.addEventListener('scroll', optimizedScrollHandler);
+// ===== ANALYTICS Y TRACKING =====
+function trackUserInteraction(action, category = 'general') {
+    // Aquí puedes integrar Google Analytics o cualquier otro servicio
+    console.log(`📊 Tracking: ${category} - ${action}`);
+    
+    // Ejemplo para Google Analytics 4
+    if (typeof gtag !== 'undefined') {
+        gtag('event', action, {
+            event_category: category,
+            event_label: window.location.pathname
+        });
+    }
+}
+
+// ===== FUNCIONES ESPECÍFICAS PARA FUTRAVIF =====
+// Función para manejar solicitudes de beca
+function handleBecaApplication() {
+    trackUserInteraction('formulario_beca_inicio', 'conversions');
+    window.location.href = 'Formulario/formulario.html';
+}
+
+// Función para manejar contacto
+function handleContact(method) {
+    trackUserInteraction(`contacto_${method}`, 'contact');
+}
+
+// Función para mostrar información de cuenta bancaria
+function showAccountDetails(element) {
+    const accountInfo = element.querySelector('.account-info');
+    if (accountInfo) {
+        accountInfo.style.background = 'rgba(44, 114, 183, 0.1)';
+        accountInfo.style.borderRadius = '8px';
+        accountInfo.style.padding = '1rem';
+        accountInfo.style.transition = 'all 0.3s ease';
+        
+        setTimeout(() => {
+            accountInfo.style.background = 'transparent';
+            accountInfo.style.padding = '0';
+        }, 2000);
+    }
+}
 
 // Precargar imágenes importantes
 function preloadImages() {
@@ -782,94 +1194,6 @@ function preloadImages() {
     });
 }
 
-// ===== ACCESSIBILITY =====
-function initializeAccessibility() {
-    // Soporte para navegación por teclado
-    document.addEventListener('keydown', function(e) {
-        // ESC para cerrar menú móvil
-        if (e.key === 'Escape') {
-            const hamburger = document.querySelector('.hamburger');
-            const navMenu = document.querySelector('.nav-menu');
-            
-            if (hamburger && navMenu && navMenu.classList.contains('active')) {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('active');
-                document.body.classList.remove('menu-open');
-            }
-        }
-        
-        // Enter en cards para activar hover effect
-        if (e.key === 'Enter' && e.target.classList.contains('card')) {
-            e.target.click();
-        }
-    });
-    
-    // Añadir indicadores de focus visibles
-    const focusableElements = document.querySelectorAll(
-        'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
-    );
-    
-    focusableElements.forEach(element => {
-        element.addEventListener('focus', function() {
-            this.classList.add('focused');
-        });
-        
-        element.addEventListener('blur', function() {
-            this.classList.remove('focused');
-        });
-    });
-}
-
-// ===== ANALYTICS Y TRACKING =====
-function trackUserInteraction(action, category = 'general') {
-    // Aquí puedes integrar Google Analytics o cualquier otro servicio
-    console.log(`Tracking: ${category} - ${action}`);
-    
-    // Ejemplo para Google Analytics 4
-    if (typeof gtag !== 'undefined') {
-        gtag('event', action, {
-            event_category: category,
-            event_label: window.location.pathname
-        });
-    }
-}
-
-// Rastrear clics en botones importantes
-document.addEventListener('click', function(e) {
-    if (e.target.matches('.btn-primary, .btn-cta')) {
-        trackUserInteraction('solicitud_beca_click', 'conversions');
-    }
-    
-    if (e.target.matches('.social-link')) {
-        const platform = e.target.className.split(' ').find(c => c !== 'social-link');
-        trackUserInteraction(`social_${platform}_click`, 'social');
-    }
-});
-
-// ===== INICIALIZACIÓN COMPLETA =====
-// Ejecutar funciones adicionales cuando todo esté listo
-window.addEventListener('load', function() {
-    preloadImages();
-    initializeAccessibility();
-    initializeAdvancedEffects();
-    
-    // Mostrar notificación de bienvenida
-    setTimeout(() => {
-        showNotification('¡Bienvenido a FUTRAVIF! Explora nuestros programas educativos.', 'success');
-    }, 2000);
-});
-
-// ===== MANEJO DE ERRORES =====
-window.addEventListener('error', function(e) {
-    console.error('Error en la aplicación:', e.error);
-    
-    // En producción, enviar errores a servicio de logging
-    if (window.location.hostname !== 'localhost') {
-        // trackError(e.error);
-    }
-});
-
-// ===== FUNCIONES DE UTILIDAD ADICIONALES =====
 // Detectar si el usuario prefiere modo oscuro
 function detectDarkMode() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -885,32 +1209,54 @@ function getDeviceInfo() {
     };
 }
 
-// Función para copiar texto al portapapeles
-async function copyToClipboard(text) {
-    try {
-        await navigator.clipboard.writeText(text);
-        showNotification('Texto copiado al portapapeles', 'success');
-        return true;
-    } catch (err) {
-        console.error('Error al copiar:', err);
-        showNotification('No se pudo copiar el texto', 'error');
-        return false;
-    }
+// ===== EVENT LISTENERS GLOBALES =====
+function setupGlobalEventListeners() {
+    console.log('🎧 Configurando event listeners globales...');
+    
+    // Rastrear clics en botones importantes
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.btn-primary, .btn-cta')) {
+            trackUserInteraction('solicitud_beca_click', 'conversions');
+        }
+        
+        if (e.target.matches('.social-link')) {
+            const platform = e.target.className.split(' ').find(c => c !== 'social-link');
+            trackUserInteraction(`social_${platform}_click`, 'social');
+        }
+        
+        // Tracking de interacciones específicas
+        if (e.target.matches('a[href="Formulario/formulario.html"]')) {
+            handleBecaApplication();
+        }
+        
+        if (e.target.matches('.social-link')) {
+            const platform = Array.from(e.target.classList).find(c => c !== 'social-link');
+            handleContact(platform);
+        }
+        
+        // Funcionalidad de copia para números de cuenta
+        if (e.target.closest('.account-info')) {
+            const accountNumber = e.target.textContent.match(/\d{3}-\d{6}-\d|\d{10}/);
+            if (accountNumber) {
+                copyToClipboard(accountNumber[0]);
+            }
+        }
+    });
+
+    // Añadir funcionalidad a las tarjetas bancarias
+    document.querySelectorAll('.bank-card').forEach(card => {
+        card.addEventListener('click', function() {
+            showAccountDetails(this);
+            showNotification('Información de cuenta destacada. Haz clic en el número para copiarlo.', 'info');
+        });
+    });
+
+    console.log('✅ Event listeners globales configurados');
 }
 
-// Añadir funcionalidad de copia para números de cuenta
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.account-info')) {
-        const accountNumber = e.target.textContent.match(/\d{3}-\d{6}-\d/);
-        if (accountNumber) {
-            copyToClipboard(accountNumber[0]);
-        }
-    }
-});
-
-// ===== CSS DINÁMICO ADICIONAL =====
-// Añadir estilos CSS adicionales dinámicamente
-const additionalCSS = `
+// ===== CSS DINÁMICO =====
+function injectDynamicCSS() {
+    const additionalCSS = `
 @keyframes slideInRight {
     from {
         transform: translateX(100%);
@@ -933,6 +1279,23 @@ const additionalCSS = `
     }
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    40% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+    60% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
+
 .notification {
     font-family: var(--font-primary);
     font-size: 0.9rem;
@@ -946,11 +1309,6 @@ const additionalCSS = `
 .field-error {
     display: block;
     animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .error {
@@ -997,6 +1355,34 @@ const additionalCSS = `
     transform: scale(0.95) !important;
 }
 
+.nav-link.active {
+    color: #2C72B7 !important;
+    background: rgba(44, 114, 183, 0.1) !important;
+}
+
+.bank-card:hover {
+    border-color: #0F2D3F;
+    cursor: pointer;
+}
+
+.council-member:hover {
+    border-top-color: #0F2D3F;
+}
+
+.social-link:hover {
+    transform: translateY(-3px) scale(1.1);
+    filter: brightness(1.2);
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    animation: bounce 2s infinite;
+}
+
 /* Mejoras de accesibilidad */
 @media (prefers-reduced-motion: reduce) {
     .hero::before,
@@ -1029,10 +1415,6 @@ const additionalCSS = `
         padding: 2rem 0 !important;
     }
     
-    .hero-content * {
-        color: black !important;
-    }
-    
     .section {
         page-break-inside: avoid;
         padding: 1rem 0 !important;
@@ -1044,183 +1426,100 @@ const additionalCSS = `
         page-break-inside: avoid;
     }
 }
-
-/* Estados de carga */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 45, 63, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    backdrop-filter: blur(5px);
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid rgba(44, 114, 183, 0.3);
-    border-top: 4px solid #2C72B7;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Mejoras de UX */
-.nav-link.active {
-    color: #2C72B7 !important;
-    background: rgba(44, 114, 183, 0.1) !important;
-}
-
-.nav-link.active::after {
-    width: 80% !important;
-}
-
-/* Hover mejorado para elementos interactivos */
-.bank-card:hover {
-    border-color: #0F2D3F;
-    cursor: pointer;
-}
-
-.council-member:hover {
-    border-top-color: #0F2D3F;
-}
-
-/* Efectos de gradiente animados */
-.gradient-text {
-    background: linear-gradient(45deg, #2C72B7, #0F2D3F);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Estados de hover para botones sociales */
-.social-link:hover {
-    transform: translateY(-3px) scale(1.1);
-    filter: brightness(1.2);
-}
-
-/* Indicador de scroll */
-.scroll-indicator {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateX(-50%) translateY(0);
-    }
-    40% {
-        transform: translateX(-50%) translateY(-10px);
-    }
-    60% {
-        transform: translateX(-50%) translateY(-5px);
-    }
-}
 `;
 
-// Inyectar CSS adicional
-const styleSheet = document.createElement('style');
-styleSheet.textContent = additionalCSS;
-document.head.appendChild(styleSheet);
+    // Inyectar CSS adicional
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = additionalCSS;
+    document.head.appendChild(styleSheet);
+}
+
+// ===== MANEJO DE ERRORES =====
+function setupErrorHandling() {
+    window.addEventListener('error', function(e) {
+        console.error('❌ Error en la aplicación:', e.error);
+        
+        // En producción, enviar errores a servicio de logging
+        if (window.location.hostname !== 'localhost') {
+            trackUserInteraction('javascript_error', 'errors');
+        }
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('❌ Promise rejection no manejada:', e.reason);
+    });
+}
 
 // ===== INICIALIZACIÓN FINAL =====
-// Asegurar que todo esté inicializado correctamente
+// Ejecutar cuando la página esté completamente cargada
+window.addEventListener('load', function() {
+    console.log('🚀 Página completamente cargada - Ejecutando funciones adicionales...');
+    
+    // Funciones que necesitan que todo esté cargado
+    preloadImages();
+    initializeAdvancedEffects();
+    setupGlobalEventListeners();
+    injectDynamicCSS();
+    setupErrorHandling();
+    
+    // Mostrar notificación de bienvenida
+    setTimeout(() => {
+        showNotification('¡Bienvenido a FUTRAVIF! Explora nuestros programas educativos.', 'success');
+    }, 2000);
+    
+    // Añadir indicador de scroll en el hero
+    setTimeout(() => {
+        const hero = document.querySelector('.hero');
+        if (hero) {
+            const scrollIndicator = document.createElement('div');
+            scrollIndicator.className = 'scroll-indicator';
+            scrollIndicator.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            scrollIndicator.style.cssText = `
+                position: absolute;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: white;
+                font-size: 1.5rem;
+                animation: bounce 2s infinite;
+                cursor: pointer;
+                z-index: 10;
+            `;
+            
+            scrollIndicator.addEventListener('click', function() {
+                const nosotrosSection = document.getElementById('nosotros');
+                if (nosotrosSection) {
+                    nosotrosSection.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+            
+            hero.appendChild(scrollIndicator);
+        }
+    }, 1000);
+
+    console.log('🎉 FUTRAVIF Website completamente inicializado!');
+});
+
+// Backup initialization si DOMContentLoaded ya pasó
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
+    // Ya tenemos el listener de DOMContentLoaded arriba
 } else {
+    // DOM ya está listo, inicializar inmediatamente
+    console.log('DOM ya estaba listo, inicializando...');
     initializeApp();
 }
 
-// Añadir indicador de scroll en el hero
-setTimeout(() => {
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        const scrollIndicator = document.createElement('div');
-        scrollIndicator.className = 'scroll-indicator';
-        scrollIndicator.innerHTML = '<i class="fas fa-chevron-down"></i>';
-        scrollIndicator.style.cssText = `
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 1.5rem;
-            animation: bounce 2s infinite;
-            cursor: pointer;
-        `;
-        
-        scrollIndicator.addEventListener('click', function() {
-            document.getElementById('nosotros').scrollIntoView({
-                behavior: 'smooth'
-            });
-        });
-        
-        hero.appendChild(scrollIndicator);
-    }
-}, 1000);
+// ===== LOGGING Y DEBUG =====
+console.log('%c🚀 FUTRAVIF Website JavaScript loaded successfully!', 'background: #2C72B7; color: white; padding: 8px; border-radius: 4px;');
+console.log('%cVersión: 2.0.0 - Optimizado', 'color: #2C72B7; font-weight: bold;');
+console.log('%cDesarrollado para: Fundación Transformando Vidas para el Futuro', 'color: #0F2D3F;');
+console.log('%c📹 Video player incluido y optimizado', 'color: #28a745;');
 
-// ===== FUNCIONES ESPECÍFICAS PARA FUTRAVIF =====
-// Función para manejar solicitudes de beca
-function handleBecaApplication() {
-    trackUserInteraction('formulario_beca_inicio', 'conversions');
-    window.location.href = 'Formulario/formulario.html';
+// Información de debug en desarrollo
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('%c🔧 MODO DESARROLLO ACTIVO', 'background: #ffc107; color: black; padding: 4px;');
+    console.log('Device Info:', getDeviceInfo());
+    console.log('Dark mode preferred:', detectDarkMode());
 }
-
-// Función para manejar contacto
-function handleContact(method) {
-    trackUserInteraction(`contacto_${method}`, 'contact');
-}
-
-// Añadir listeners para eventos específicos
-document.addEventListener('click', function(e) {
-    // Tracking de interacciones
-    if (e.target.matches('a[href="Formulario/formulario.html"]')) {
-        handleBecaApplication();
-    }
-    
-    if (e.target.matches('.social-link')) {
-        const platform = Array.from(e.target.classList).find(c => c !== 'social-link');
-        handleContact(platform);
-    }
-});
-
-// Función para mostrar información de cuenta bancaria
-function showAccountDetails(element) {
-    const accountInfo = element.querySelector('.account-info');
-    if (accountInfo) {
-        accountInfo.style.background = 'rgba(44, 114, 183, 0.1)';
-        accountInfo.style.borderRadius = '8px';
-        accountInfo.style.padding = '1rem';
-        accountInfo.style.transition = 'all 0.3s ease';
-        
-        setTimeout(() => {
-            accountInfo.style.background = 'transparent';
-            accountInfo.style.padding = '0';
-        }, 2000);
-    }
-}
-
-// Añadir funcionalidad a las tarjetas bancarias
-document.querySelectorAll('.bank-card').forEach(card => {
-    card.addEventListener('click', function() {
-        showAccountDetails(this);
-        showNotification('Información de cuenta destacada. Haz clic en el número para copiarlo.', 'info');
-    });
-});
-
-console.log('FUTRAVIF Website JavaScript loaded successfully! 🚀');
-console.log('Versión: 1.0.0');
-console.log('Desarrollado para: Fundación Transformando Vidas para el Futuro');
