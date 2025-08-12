@@ -1339,3 +1339,198 @@ a, button, input, textarea, select {
 .university-item:nth-child(7):hover { border-top-color: #d35400; }
 .university-item:nth-child(8):hover { border-top-color: #138d75; }
 .university-item:nth-child(9):hover { border-top-color: #1b2631; }
+
+
+/* ===== COLLAGE FUTRAVIF CON FOTOS COMO RELLENO DE LETRAS ===== */
+
+.futravif-collage {
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.letter-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(4px, 1vw, 12px);
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.collage-letter {
+    font-family: 'Arial Black', Arial, sans-serif;
+    font-size: clamp(120px, 18vw, 190px);
+    font-weight: 900;
+    line-height: 1;
+    color: transparent;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-clip: text;
+    -webkit-background-clip: text;
+    text-shadow: 0 0 0 rgba(0,0,0,0.1);
+    transition: var(--transition-normal);
+    cursor: pointer;
+    position: relative;
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+/* Asignar cada foto a cada letra */
+.letter-f { 
+    background-image: url('img/collage/f1.png');
+}
+
+.letter-u { 
+    background-image: url('img/collage/u.png');
+}
+
+.letter-t { 
+    background-image: url('img/collage/t.png');
+}
+
+.letter-r { 
+    background-image: url('img/collage/r.png');
+}
+
+.letter-a { 
+    background-image: url('img/collage/a.png');
+}
+
+.letter-v { 
+    background-image: url('img/collage/v.png');
+}
+
+.letter-i { 
+    background-image: url('img/collage/i.png');
+}
+
+.letter-f2 { 
+    background-image: url('img/collage/f2.png');
+}
+
+/* Efectos de hover */
+.collage-letter:hover {
+    transform: translateY(-5px) scale(1.05);
+    filter: drop-shadow(0 8px 16px rgba(44, 114, 183, 0.4));
+    z-index: 10;
+}
+
+/* Crear un borde sutil para definir mejor las letras */
+.collage-letter::before {
+    content: attr(data-letter);
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: inherit;
+    font-weight: inherit;
+    color: rgba(0, 0, 0, 0.2);
+    z-index: -1;
+    background-clip: initial;
+    -webkit-background-clip: initial;
+}
+
+/* Animación de entrada */
+.collage-letter {
+    opacity: 0;
+    transform: translateY(30px) scale(0.8);
+    animation: letterFadeIn 0.8s ease forwards;
+}
+
+/* Delays escalonados para cada letra */
+.letter-f { animation-delay: 0.2s; }
+.letter-u { animation-delay: 0.3s; }
+.letter-t { animation-delay: 0.4s; }
+.letter-r { animation-delay: 0.5s; }
+.letter-a { animation-delay: 0.6s; }
+.letter-v { animation-delay: 0.7s; }
+.letter-i { animation-delay: 0.8s; }
+.letter-f2 { animation-delay: 0.9s; }
+
+@keyframes letterFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px) scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Fallback para navegadores que no soporten background-clip: text */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+    .collage-letter {
+        color: var(--primary-blue);
+        background: none;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .letter-container {
+        gap: clamp(3px, 0.8vw, 10px);
+        padding: 0 var(--spacing-sm);
+    }
+    
+    .collage-letter {
+        font-size: clamp(90px, 15vw, 180px);
+    }
+    
+    .collage-letter:hover {
+        transform: translateY(-3px) scale(1.03);
+    }
+}
+
+/* Móviles */
+@media (max-width: 480px) {
+    .letter-container {
+        gap: clamp(2px, 0.5vw, 8px);
+        padding: 0 var(--spacing-xs);
+    }
+    
+    .collage-letter {
+        font-size: clamp(70px, 12vw, 140px);
+    }
+    
+    .collage-letter:hover {
+        transform: translateY(-2px) scale(1.02);
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+    .letter-container {
+        gap: 2px;
+    }
+    
+    .collage-letter {
+        font-size: clamp(60px, 10vw, 120px);
+    }
+}
+
+/* ===== ACCESIBILIDAD ===== */
+
+@media (prefers-reduced-motion: reduce) {
+    .collage-letter {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    
+    .collage-letter:hover {
+        transform: none !important;
+    }
+}
+
+/* Estados de focus */
+.collage-letter:focus {
+    outline: 2px solid var(--primary-blue);
+    outline-offset: 4px;
+    border-radius: var(--border-radius);
+}
