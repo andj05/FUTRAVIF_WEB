@@ -928,40 +928,68 @@ a, button, input, textarea, select {
     }
 }
 
-/* ===== SECCIÓN UNIVERSIDADES ===== */
+/* ===== CARRUSEL LIMPIO DE UNIVERSIDADES ===== */
 
-/* Descripción de la sección */
+/* Reemplaza todos los estilos anteriores del carrusel con estos: */
+
 .universities-description {
     text-align: center;
     font-size: 1.1rem;
     color: var(--gray);
     max-width: 800px;
-    margin: 0 auto var(--spacing-lg);
+    margin: 0 auto var(--spacing-xl);
     line-height: 1.7;
 }
 
-/* Grid principal de universidades */
-.universities-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-md);
+/* Container principal del carrusel */
+.universities-carousel-clean {
+    position: relative;
     margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(44, 114, 183, 0.02), rgba(15, 45, 63, 0.02));
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg) 0;
 }
 
-/* Item individual de universidad */
-.university-item {
+/* Track del carrusel */
+.carousel-track-clean {
+    display: flex;
+    animation: autoScroll 45s linear infinite;
+    width: max-content;
+    gap: var(--spacing-lg);
+}
+
+/* Pausar animación al hacer hover */
+.universities-carousel-clean:hover .carousel-track-clean {
+    animation-play-state: paused;
+}
+
+/* Animación de scroll automático */
+@keyframes autoScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(calc(-100% + 100vw));
+    }
+}
+
+/* Tarjeta individual de universidad */
+.university-card {
+    flex: 0 0 280px;
     background: var(--white);
-    padding: var(--spacing-lg);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
+    padding: var(--spacing-lg);
     text-align: center;
     transition: var(--transition-normal);
-    border-top: 3px solid var(--primary-blue);
+    border: 1px solid rgba(44, 114, 183, 0.1);
     position: relative;
     overflow: hidden;
 }
 
-.university-item::before {
+/* Efecto de hover sutil */
+.university-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -971,69 +999,132 @@ a, button, input, textarea, select {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(44, 114, 183, 0.1),
+        rgba(44, 114, 183, 0.05),
         transparent
     );
     transition: var(--transition-normal);
 }
 
-.university-item:hover::before {
+.university-card:hover::before {
     left: 100%;
 }
 
-.university-item:hover {
+.university-card:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-lg);
-    border-top-color: var(--dark-blue);
+    border-color: var(--primary-blue);
 }
 
-/* Contenedor del logo */
-.university-logo {
+/* Container del logo - TAMAÑO FIJO para uniformidad */
+.university-logo-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto var(--spacing-md);
+    background: rgba(44, 114, 183, 0.05);
+    border-radius: var(--border-radius);
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 80px;
-    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
     position: relative;
-    z-index: 2;
+    overflow: hidden;
 }
 
-/* Imagen del logo */
-.university-image {
-    max-width: 100%;
-    max-height: 80px;
+/* Imagen del logo - UNIFORME */
+.university-logo-img {
+    max-width: 90%;
+    max-height: 90%;
     width: auto;
     height: auto;
     object-fit: contain;
-    filter: grayscale(0.3);
+    filter: grayscale(0.2);
     transition: var(--transition-normal);
 }
 
-.university-item:hover .university-image {
+.university-card:hover .university-logo-img {
     filter: grayscale(0);
     transform: scale(1.05);
 }
 
-/* Nombre corto de la universidad */
-.university-item h4 {
+/* Información de la universidad */
+.university-info h4 {
     color: var(--primary-blue);
     font-size: 1.3rem;
     font-weight: bold;
     margin-bottom: var(--spacing-xs);
-    position: relative;
-    z-index: 2;
+    transition: var(--transition-fast);
 }
 
-/* Nombre completo de la universidad */
-.university-item p {
+.university-card:hover .university-info h4 {
+    color: var(--dark-blue);
+}
+
+.university-info p {
     color: var(--gray);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.4;
-    position: relative;
-    z-index: 2;
+    transition: var(--transition-fast);
+    min-height: 40px; /* Altura mínima para uniformidad */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Sección de estadísticas */
+.university-card:hover .university-info p {
+    color: var(--dark-gray);
+}
+
+/* Indicadores (dots) mejorados */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-sm) 0;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(44, 114, 183, 0.3);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.dot.active {
+    background: var(--primary-blue);
+    transform: scale(1.3);
+}
+
+.dot:hover {
+    background: var(--dark-blue);
+    transform: scale(1.2);
+}
+
+/* Efecto de pulso para el dot activo */
+.dot.active::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1px solid rgba(44, 114, 183, 0.3);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.3);
+    }
+}
+
+/* Estadísticas - mantenemos el diseño anterior */
 .universities-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1041,64 +1132,97 @@ a, button, input, textarea, select {
     background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
     padding: var(--spacing-lg);
     border-radius: var(--border-radius-lg);
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
 }
 
-/* Item individual de estadística */
 .stat-item {
     text-align: center;
     color: var(--white);
 }
 
-/* Número de la estadística */
 .stat-number {
     font-size: 3rem;
     font-weight: bold;
     color: var(--white);
     margin-bottom: var(--spacing-xs);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    animation: countUp 2s ease-out;
 }
 
-/* Label de la estadística */
 .stat-label {
     font-size: 1rem;
     opacity: 0.9;
     font-weight: 500;
 }
 
-/* Animación para los números */
-@keyframes countUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ===== RESPONSIVE DESIGN PARA UNIVERSIDADES ===== */
+/* ===== RESPONSIVE DESIGN ===== */
 
 /* Tablets */
 @media (max-width: 1024px) {
-    .universities-grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: var(--spacing-sm);
-    }
-    
-    .university-item {
+    .university-card {
+        flex: 0 0 250px;
         padding: var(--spacing-md);
     }
     
-    .university-logo {
+    .university-logo-container {
+        width: 80px;
+        height: 80px;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .university-info h4 {
+        font-size: 1.2rem;
+    }
+    
+    .university-info p {
+        font-size: 0.8rem;
+        min-height: 35px;
+    }
+    
+    .carousel-track-clean {
+        animation-duration: 40s;
+    }
+}
+
+/* Móviles */
+@media (max-width: 768px) {
+    .universities-carousel-clean {
+        padding: var(--spacing-md) 0;
+    }
+    
+    .university-card {
+        flex: 0 0 220px;
+        padding: var(--spacing-sm);
+    }
+    
+    .university-logo-container {
+        width: 70px;
         height: 70px;
         margin-bottom: var(--spacing-sm);
     }
     
-    .university-image {
-        max-height: 70px;
+    .university-info h4 {
+        font-size: 1.1rem;
+    }
+    
+    .university-info p {
+        font-size: 0.75rem;
+        min-height: 30px;
+    }
+    
+    .carousel-track-clean {
+        gap: var(--spacing-sm);
+        animation-duration: 35s;
+    }
+    
+    .dot {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .universities-stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
     }
     
     .stat-number {
@@ -1106,239 +1230,132 @@ a, button, input, textarea, select {
     }
 }
 
-/* Móviles grandes */
-@media (max-width: 768px) {
-    .universities-description {
-        font-size: 1rem;
-        padding: 0 var(--spacing-sm);
-    }
-    
-    .universities-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spacing-sm);
-    }
-    
-    .university-item {
+/* Móviles pequeños */
+@media (max-width: 480px) {
+    .university-card {
+        flex: 0 0 200px;
         padding: var(--spacing-sm);
     }
     
-    .university-logo {
+    .university-logo-container {
+        width: 60px;
         height: 60px;
-        margin-bottom: var(--spacing-sm);
     }
     
-    .university-image {
-        max-height: 60px;
+    .university-info h4 {
+        font-size: 1rem;
     }
     
-    .university-item h4 {
-        font-size: 1.2rem;
+    .university-info p {
+        font-size: 0.7rem;
+        min-height: 25px;
     }
     
-    .university-item p {
-        font-size: 0.85rem;
-    }
-    
-    .universities-stats {
-        grid-template-columns: 1fr;
-        padding: var(--spacing-md);
-        gap: var(--spacing-sm);
+    .carousel-track-clean {
+        animation-duration: 30s;
     }
     
     .stat-number {
         font-size: 2rem;
     }
-    
-    .stat-label {
-        font-size: 0.9rem;
-    }
 }
 
-/* Móviles pequeños */
-@media (max-width: 480px) {
-    .universities-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-    }
-    
-    .university-item {
-        margin: 0 var(--spacing-xs);
-    }
-    
-    .university-logo {
-        height: 50px;
-    }
-    
-    .university-image {
-        max-height: 50px;
-    }
-    
-    .university-item h4 {
-        font-size: 1.1rem;
-    }
-    
-    .university-item p {
-        font-size: 0.8rem;
-    }
-    
-    .stat-number {
-        font-size: 1.8rem;
-    }
-}
+/* ===== ACCESIBILIDAD ===== */
 
-/* ===== EFECTOS ADICIONALES ===== */
-
-/* Efecto de hover para toda la sección */
-.universities-grid:hover .university-item:not(:hover) {
-    opacity: 0.7;
-    transform: scale(0.98);
-}
-
-/* Efecto de loading para logos */
-.university-image {
-    opacity: 0;
-    animation: fadeInImage 0.6s ease forwards;
-}
-
-/* Delays escalonados para la animación */
-.university-item:nth-child(1) .university-image { animation-delay: 0.1s; }
-.university-item:nth-child(2) .university-image { animation-delay: 0.2s; }
-.university-item:nth-child(3) .university-image { animation-delay: 0.3s; }
-.university-item:nth-child(4) .university-image { animation-delay: 0.4s; }
-.university-item:nth-child(5) .university-image { animation-delay: 0.5s; }
-.university-item:nth-child(6) .university-image { animation-delay: 0.6s; }
-.university-item:nth-child(7) .university-image { animation-delay: 0.7s; }
-.university-item:nth-child(8) .university-image { animation-delay: 0.8s; }
-.university-item:nth-child(9) .university-image { animation-delay: 0.9s; }
-
-@keyframes fadeInImage {
-    from {
-        opacity: 0;
-        transform: scale(0.8) rotate(-5deg);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) rotate(0deg);
-    }
-}
-
-/* Estados especiales para accesibilidad */
+/* Pausar animaciones para usuarios que prefieren menos movimiento */
 @media (prefers-reduced-motion: reduce) {
-    .university-item::before,
-    .university-image,
-    .stat-number {
+    .carousel-track-clean {
         animation: none !important;
     }
     
-    .university-item:hover {
-        transform: none !important;
+    .dot.active::after {
+        animation: none !important;
     }
     
-    .university-item:hover .university-image {
+    .university-card:hover {
         transform: none !important;
     }
 }
 
-/* Estados de focus para accesibilidad */
-.university-item:focus-within {
+/* Estados de focus mejorados */
+.dot:focus {
     outline: 2px solid var(--primary-blue);
     outline-offset: 2px;
 }
 
-/* Efecto de tooltips para nombres largos */
-.university-item p {
-    position: relative;
+.university-card:focus-within {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-blue);
 }
 
-.university-item:hover p {
-    color: var(--dark-blue);
+/* Alto contraste */
+@media (prefers-contrast: high) {
+    .university-card {
+        border: 2px solid var(--dark-blue);
+    }
+    
+    .university-logo-container {
+        background: rgba(44, 114, 183, 0.1);
+        border: 1px solid var(--primary-blue);
+    }
+    
+    .dot {
+        border: 1px solid var(--dark-blue);
+    }
 }
 
 /* Print styles */
 @media print {
-    .university-item {
-        box-shadow: none !important;
-        border: 1px solid #ccc !important;
+    .universities-carousel-clean {
+        overflow: visible !important;
+    }
+    
+    .carousel-track-clean {
+        animation: none !important;
+        flex-wrap: wrap !important;
+        gap: var(--spacing-sm) !important;
+    }
+    
+    .university-card {
+        flex: 0 0 calc(33.333% - var(--spacing-sm)) !important;
         page-break-inside: avoid;
     }
     
-    .university-image {
-        filter: none !important;
-    }
-    
-    .universities-stats {
-        background: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-    }
-    
-    .stat-number,
-    .stat-label {
-        color: black !important;
+    .carousel-dots {
+        display: none !important;
     }
 }
 
-/* ===== MEJORAS DE RENDIMIENTO ===== */
+/* ===== FALLBACKS Y MEJORAS ===== */
 
-/* Optimización de imágenes */
-.university-image {
-    will-change: filter, transform;
-}
-
-.university-item {
-    will-change: transform, box-shadow;
-}
-
-/* Contenido de ejemplo para cuando no hay imagen */
-.university-logo:empty::after {
-    content: '🏛️';
-    font-size: 3rem;
-    opacity: 0.3;
-}
-
-/* Estado de carga */
-.university-image:not([src]),
-.university-image[src=""] {
+/* Fallback para imágenes que no cargan */
+.university-logo-img:not([src]),
+.university-logo-img[src=""] {
     display: none;
 }
 
-.university-logo:has(.university-image:not([src])),
-.university-logo:has(.university-image[src=""]) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.university-logo-container:has(.university-logo-img:not([src])),
+.university-logo-container:has(.university-logo-img[src=""]) {
+    background: var(--primary-blue);
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: bold;
 }
 
-.university-logo:has(.university-image:not([src]))::after,
-.university-logo:has(.university-image[src=""])::after {
+.university-logo-container:has(.university-logo-img:not([src]))::after,
+.university-logo-container:has(.university-logo-img[src=""])::after {
     content: '🏛️';
-    font-size: 3rem;
-    opacity: 0.3;
 }
 
-/* ===== VARIACIONES DE COLOR PARA UNIVERSIDADES ESPECÍFICAS ===== */
+/* Optimización de rendimiento */
+.university-logo-img {
+    will-change: filter, transform;
+}
 
-/* Puedes personalizar colores específicos si lo deseas */
-.university-item:nth-child(1) { border-top-color: #e74c3c; } /* UNPHU - Rojo */
-.university-item:nth-child(2) { border-top-color: #9b59b6; } /* PUCMM - Púrpura */
-.university-item:nth-child(3) { border-top-color: #3498db; } /* ITLA - Azul */
-.university-item:nth-child(4) { border-top-color: #f39c12; } /* UASD - Naranja */
-.university-item:nth-child(5) { border-top-color: #1abc9c; } /* UNIBE - Turquesa */
-.university-item:nth-child(6) { border-top-color: #34495e; } /* UTESUR - Gris oscuro */
-.university-item:nth-child(7) { border-top-color: #e67e22; } /* INTEC - Naranja oscuro */
-.university-item:nth-child(8) { border-top-color: #16a085; } /* UNIREMHOS - Verde azulado */
-.university-item:nth-child(9) { border-top-color: #2c3e50; } /* UNAPEC - Azul marino */
-
-/* Hover states con colores específicos */
-.university-item:nth-child(1):hover { border-top-color: #c0392b; }
-.university-item:nth-child(2):hover { border-top-color: #8e44ad; }
-.university-item:nth-child(3):hover { border-top-color: #2980b9; }
-.university-item:nth-child(4):hover { border-top-color: #d68910; }
-.university-item:nth-child(5):hover { border-top-color: #17a2b8; }
-.university-item:nth-child(6):hover { border-top-color: #2c3e50; }
-.university-item:nth-child(7):hover { border-top-color: #d35400; }
-.university-item:nth-child(8):hover { border-top-color: #138d75; }
-.university-item:nth-child(9):hover { border-top-color: #1b2631; }
+.university-card {
+    will-change: transform, box-shadow;
+}
 
 
 /* ===== COLLAGE FUTRAVIF CON FOTOS COMO RELLENO DE LETRAS ===== */

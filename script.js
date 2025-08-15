@@ -1511,6 +1511,179 @@ if (document.readyState === 'loading') {
     initializeApp();
 }
 
+// ===== CARRUSEL LIMPIO DE UNIVERSIDADES =====
+// Reemplaza el código anterior del carrusel con este:
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del carrusel
+    const carouselTrack = document.getElementById('carousel-track-clean');
+    const dots = document.querySelectorAll('.dot');
+    
+    // Variables
+    let currentDot = 0;
+    const totalDots = dots.length;
+    let dotInterval;
+    
+    // Función para actualizar el dot activo
+    function updateActiveDot() {
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentDot);
+        });
+    }
+    
+    // Función para cambiar al siguiente dot
+    function nextDot() {
+        currentDot = (currentDot + 1) % totalDots;
+        updateActiveDot();
+    }
+    
+    // Auto-cambio de dots cada 5 segundos
+    function startDotRotation() {
+        dotInterval = setInterval(nextDot, 5000);
+    }
+    
+    // Pausar rotación de dots
+    function pauseDotRotation() {
+        clearInterval(dotInterval);
+    }
+    
+    // Event listeners para los dots
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', () => {
+            currentDot = index;
+            updateActiveDot();
+            pauseDotRotation();
+            setTimeout(startDotRotation, 3000); // Reanudar después de 3 segundos
+        });
+    });
+    
+    // Pausar cuando el mouse está sobre el carrusel
+    const carousel = document.querySelector('.universities-carousel-clean');
+    if (carousel) {
+        carousel.addEventListener('mouseenter', pauseDotRotation);
+        carousel.addEventListener('mouseleave', startDotRotation);
+    }
+    
+    // Pausar cuando la pestaña no está visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            pauseDotRotation();
+        } else {
+            startDotRotation();
+        }
+    });
+    
+    // Pausar para usuarios que prefieren menos movimiento
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        // No iniciar rotación automática
+        return;
+    }
+    
+    // Inicializar
+    if (carousel && carouselTrack) {
+        startDotRotation();
+        updateActiveDot();
+    }
+    
+    // ===== ANIMACIÓN DE CONTADORES =====
+    function animateCounters() {
+        const counters = document.querySelectorAll('.stat-number');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = entry.target;
+                    const finalNumber = target.textContent;
+                    const isPercentage = finalNumber.includes('%');
+                    const isPlusSign = finalNumber.includes('+');
+                    const numericValue = parseInt(finalNumber.replace(/[^\d]/g, ''));
+                    
+                    // Animar el contador
+                    let currentValue = 0;
+                    const increment = numericValue / 60; // 60 frames para 1 segundo
+                    const timer = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= numericValue) {
+                            currentValue = numericValue;
+                            clearInterval(timer);
+                        }
+                        
+                        let displayValue = Math.floor(currentValue);
+                        if (isPlusSign) displayValue += '+';
+                        if (isPercentage) displayValue += '%';
+                        
+                        target.textContent = displayValue;
+                    }, 16); // ~60fps
+                    
+                    observer.unobserve(target);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        counters.forEach(counter => observer.observe(counter));
+    }
+    
+    // Inicializar animación de contadores
+    animateCounters();
+    
+    // ===== SOPORTE PARA TECLADO (ACCESIBILIDAD) =====
+    document.addEventListener('keydown', (e) => {
+        if (e.target.closest('.universities-carousel-clean')) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                currentDot = currentDot === 0 ? totalDots - 1 : currentDot - 1;
+                updateActiveDot();
+                pauseDotRotation();
+                setTimeout(startDotRotation, 3000);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextDot();
+                pauseDotRotation();
+                setTimeout(startDotRotation, 3000);
+            }
+        }
+    });
+    
+    // ===== SOPORTE PARA TOUCH (MÓVILES) =====
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    
+    if (carousel) {
+        carousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            pauseDotRotation();
+        }, { passive: true });
+        
+        carousel.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            
+            // Calcular la diferencia
+            const diffX = startX - endX;
+            const diffY = startY - endY;
+            
+            // Solo procesar si el swipe es más horizontal que vertical
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    // Swipe left - siguiente
+                    nextDot();
+                } else {
+                    // Swipe right - anterior
+                    currentDot = currentDot === 0 ? totalDots - 1 : currentDot - 1;
+                    updateActiveDot();
+                }
+                setTimeout(startDotRotation, 3000);
+            } else {
+                // Si no fue un swipe válido, reanudar inmediatamente
+                startDotRotation();
+            }
+        }, { passive: true });
+    }
+});
+
+
 // ===== LOGGING Y DEBUG =====
 console.log('%c🚀 FUTRAVIF Website JavaScript loaded successfully!', 'background: #2C72B7; color: white; padding: 8px; border-radius: 4px;');
 console.log('%cVersión: 2.0.0 - Optimizado', 'color: #2C72B7; font-weight: bold;');
